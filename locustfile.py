@@ -1,59 +1,66 @@
 from locust import HttpLocust, TaskSet, task
 from bs4 import BeautifulSoup
 
-def detect_failure(self, island):
-    with self.client.get(island + "/result?q=Howard", catch_response=True) as response:
-        soup = BeautifulSoup(response.content, 'html.parser')
-        if soup.find(id="disableSecondarySearch") is not None:
-            response.failure("Secondary search disabled")
-
 class UserBehavior(TaskSet):
-    min_wait = 5000
-    max_wait = 9000
+    def detect_failure(self, island):
+        with self.client.get(island + "/result?q=Howard", catch_response=True) as response:
+            if response.content is None:
+                response.failure("Content is None")
+            else:
+                soup = BeautifulSoup(response.content, 'html.parser')
+                if soup.find(id="disableSecondarySearch") is not None:
+                    response.failure("Secondary search disabled")
 
     @task(1)
     def search(self):
-        detect_failure(self, "")
+        self.detect_failure("")
 
     @task(2)
     def books(self):
-        detect_failure(self, "/book")
+        self.detect_failure("/book")
 
     @task(3)
     def pictures(self):
-        detect_failure(self, "/picture")
+        self.detect_failure("/picture")
 
     @task(4)
     def articles(self):
-        detect_failure(self, "/article")
+        self.detect_failure("/article")
 
     @task(5)
     def newspapers(self):
-        detect_failure(self, "/newspaper")
+        self.detect_failure("/newspaper")
 
     @task(6)
     def gazettes(self):
-        detect_failure(self, "/gazette")
+        self.detect_failure("/gazette")
 
     @task(7)
     def music(self):
-        detect_failure(self, "/music")
+        self.detect_failure("/music")
 
     @task(8)
     def maps(self):
-        detect_failure(self, "/map")
+        self.detect_failure("/map")
 
     @task(9)
     def collections(self):
-        detect_failure(self, "/collection")
+        self.detect_failure("/collection")
 
     @task(10)
     def people(self):
-        detect_failure(self, "/people")
+        self.detect_failure("/people")
 
     @task(11)
     def lists(self):
-        detect_failure(self, "/list")
+        self.detect_failure("/list")
 
-class WebsiteUser(HttpLocust):
+class SlowUser(HttpLocust):
     task_set = UserBehavior
+    min_wait = 5000
+    max_wait = 15000
+
+class QuickUser(HttpLocust):
+    task_set = UserBehavior
+    min_wait = 3000
+    max_wait = 8000
